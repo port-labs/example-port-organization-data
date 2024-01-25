@@ -1,0 +1,36 @@
+{
+    "identifier": "portUser",
+    "title": "Port User",
+    "icon": "port",
+    "schema": {
+      "properties": {
+        "userInPort": {
+          "title": "User In Port",
+          "type": "string",
+          "format": "user"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string",
+          "enum": [
+            "ACTIVE",
+            "INACTIVE"
+          ],
+          "enumColors": {
+            "ACTIVE": "green",
+            "INACTIVE": "red"
+          }
+        },
+        "createdAt": {
+          "title": "Created At",
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": []
+    },
+    "mirrorProperties": {},
+    "calculationProperties": {},
+    "aggregationProperties": {},
+    "relations": {}
+}

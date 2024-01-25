@@ -1,185 +1,126 @@
-## Import the needed libraries
 import requests
-from requests.auth import HTTPBasicAuth
 from decouple import config
 from loguru import logger
-from typing import Any
-import time
-from datetime import datetime
+from typing import Any, List, Dict
+from enum import StrEnum
+import re
 
 
-# Get environment variables using the config object or os.environ["KEY"]
-# These are the credentials passed by the variables of your pipeline to your tasks and in to your env
-
-PORT_CLIENT_ID = config("PORT_CLIENT_ID")
-PORT_CLIENT_SECRET = config("PORT_CLIENT_SECRET")
-BITBUCKET_USERNAME = config("BITBUCKET_USERNAME")
-BITBUCKET_PASSWORD = config("BITBUCKET_PASSWORD")
-BITBUCKET_API_URL = config("BITBUCKET_HOST")
-PORT_API_URL = "https://api.getport.io/v1"
-
-## According to https://support.atlassian.com/bitbucket-cloud/docs/api-request-limits/
-RATE_LIMIT = 1000  # Maximum number of requests allowed per hour 
-RATE_PERIOD = 3600  # Rate limit reset period in seconds (1 hour)
-
-# Initialize rate limiting variables
-request_count = 0
-rate_limit_start = time.time()
-
-## Get Port Access Token
-credentials = {'clientId': PORT_CLIENT_ID, 'clientSecret': PORT_CLIENT_SECRET}
-token_response = requests.post(f'{PORT_API_URL}/auth/access_token', json=credentials)
-access_token = token_response.json()['accessToken']
-
-# You can now use the value in access_token when making further requests
-port_headers = {
-	'Authorization': f'Bearer {access_token}'
-}
-
-## Bitbucket user password https://developer.atlassian.com/server/bitbucket/how-tos/example-basic-authentication/
-bitbucket_auth = HTTPBasicAuth(username=BITBUCKET_USERNAME, password=BITBUCKET_PASSWORD)
+class ObjectKind(StrEnum):
+    USER = "users"
+    TEAM = "teams"
 
 
-def add_entity_to_port(blueprint_id, entity_object):
-    response = requests.post(f'{PORT_API_URL}/blueprints/{blueprint_id}/entities?upsert=true&merge=true', json=entity_object, headers=port_headers)
-    logger.info(response.json())
+class PortAPI:
+    def __init__(self, client_id: str, client_secret: str, api_url: str) -> None:
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.api_url = api_url
+        self.access_token = self.get_access_token()
+        self.port_headers = {"Authorization": f"Bearer {self.access_token}"}
 
-def get_paginated_resource(path: str, params: dict[str, Any] = None, page_size: int = 25):
-    logger.info(f"Requesting data for {path}")
+    def get_access_token(self) -> str:
+        credentials = {"clientId": self.client_id, "clientSecret": self.client_secret}
+        token_response = requests.post(
+            f"{self.api_url}/auth/access_token", json=credentials
+        )
+        return token_response.json()["accessToken"]
 
-    global request_count, rate_limit_start
+    def add_entity_to_port(
+        self, blueprint_id: str, entity_object: Dict[str, Any]
+    ) -> None:
+        response = requests.post(
+            f"{self.api_url}/blueprints/{blueprint_id}/entities?upsert=true&merge=true",
+            json=entity_object,
+            headers=self.port_headers,
+        )
+        logger.info(response.json())
 
-    # Check if we've exceeded the rate limit, and if so, wait until the reset period is over
-    if request_count >= RATE_LIMIT:
-        elapsed_time = time.time() - rate_limit_start
-        if elapsed_time < RATE_PERIOD:
-            sleep_time = RATE_PERIOD - elapsed_time
-            time.sleep(sleep_time)
-
-        # Reset the rate limiting variables
-        request_count = 0
-        rate_limit_start = time.time()
-
-    url = f"{BITBUCKET_API_URL}/rest/api/1.0/{path}"
-    params = params or {}
-    params["limit"] = page_size
-    next_page_start = None
-
-    while True:
+    def get_port_resource(
+        self, objectkind: ObjectKind, query_param: Dict[str, Any] = None
+    ) -> List[Dict[str, Any]]:
+        logger.info(
+            f"Requesting data for path: {objectkind} with params: {query_param}"
+        )
         try:
-            if next_page_start:
-                params["start"] = next_page_start
-
-            response = requests.get(url=url, auth=bitbucket_auth, params=params)
+            url = f"{self.api_url}/{objectkind}"
+            response = requests.get(
+                url=url, params=query_param, headers=self.port_headers
+            )
             response.raise_for_status()
-            page_json = response.json()
-            request_count += 1
-            batch_data = page_json["values"]
-            yield batch_data
+            response = response.json()
 
-            # Check for next page start in response
-            next_page_start = page_json.get("nextPageStart")
+            if response["ok"]:
+                result = response[objectkind]
+                logger.info(f"Received size {len(result)} {objectkind}")
+                return result
+            else:
+                logger.info(f"Error occurred while retrieving data for {objectkind}")
+                return []
 
-            # Break the loop if there is no more data
-            if not next_page_start:
-                break
         except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error with code {e.response.status_code}, content: {e.response.text}")
-            raise
-    logger.info(f"Successfully fetched paginated data for {path}")
+            logger.error(
+                f"HTTP error with code {e.response.status_code}, content: {e.response.text}"
+            )
+            return {}
 
-def convert_to_datetime(timestamp: int):
-    converted_datetime = datetime.utcfromtimestamp(timestamp / 1000.0)
-    return converted_datetime.strftime('%Y-%m-%dT%H:%M:%SZ')
+    def transform_identifier(self, identifier: str) -> str:
+        pattern = r"^[A-Za-z0-9@_.:\\\\/=-]+$"
+        if re.match(pattern, identifier):
+            return identifier
+        else:
+            fixed_identifier = re.sub(r"[^A-Za-z0-9@_.:\\\\/=-]", "-", identifier)
+            return fixed_identifier
 
-def process_project_entities(projects_data: list[dict[str, Any]]):
-    blueprint_id = "bitbucketProject"
-
-    for project in projects_data:
-        entity = {
-            "identifier": project["key"],
-            "title": project["name"],
-            "properties": {
-                "description": project.get("description"),
-                "public": project["public"],
-                "type": project["type"],
-                "link": project["links"]["self"][0]["href"]
-            },
-            "relations": {}
-        }
-        add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
-
-def process_repository_entities(repository_data: list[dict[str, Any]]):
-    blueprint_id = "bitbucketRepository"
-
-    for repo in repository_data:
-
-        entity = {
-        "identifier": repo["slug"],
-        "title": repo["name"],
-        "properties": {
-            "description": repo.get("description"),
-            "state": repo["state"],
-            "forkable": repo["forkable"],
-            "public": repo["public"],
-            "link": repo["links"]["self"][0]["href"]
-        },
-        "relations": {
-            "project": repo["project"]["key"]
-        }
-        }
-        add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
-
-def process_pullrequest_entities(pullrequest_data: list[dict[str, Any]]):
-    blueprint_id = "bitbucketPullrequest"
-
-    for pr in pullrequest_data:
-
-        entity = {
-            "identifier": str(pr["id"]),
-            "title": pr["title"],
-            "properties": {
-                "created_on": convert_to_datetime(pr["createdDate"]),
-                "updated_on": convert_to_datetime(pr["updatedDate"]),
-                "merge_commit": pr["fromRef"]["latestCommit"],
-                "description": pr.get("description"),
-                "state": pr["state"],
-                "owner": pr["author"]["user"]["displayName"],
-                "link": pr["links"]["self"][0]["href"],
-                "destination": pr["toRef"]["displayId"],
-                "participants": [user["user"]["displayName"] for user in pr.get("participants", [])],
-                "reviewers": [user["user"]["displayName"] for user in pr.get("reviewers", [])],
-                "source": pr["fromRef"]["displayId"]
-            },
-            "relations": {
-                "repository": pr["toRef"]["repository"]["slug"]
+    def process_user_entities(self, user_data: List[Dict[str, Any]]) -> None:
+        logger.info("Upserting user entities to Port")
+        blueprint_id = "portUser"
+        for user in user_data:
+            entity = {
+                "identifier": user["email"],
+                "title": f"{user['firstName']} {user['lastName']}",
+                "properties": {
+                    "status": user["status"],
+                    "createdAt": user["createdAt"],
+                    "userInPort": user["email"],
+                },
+                "relations": {},
             }
-        }
-        add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
-    
+            self.add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
 
-def get_repositories(project: dict[str, Any]):
-    repositories_path = f"projects/{project['key']}/repos"
-    for repositories_batch in get_paginated_resource(path=repositories_path):
-        logger.info(f"received repositories batch with size {len(repositories_batch)} from project: {project['key']}")
-        process_repository_entities(repository_data=repositories_batch)
-    
-        get_repository_pull_requests(repository_batch=repositories_batch)
-    
+    def process_team_entities(self, team_data: List[Dict[str, Any]]) -> None:
+        logger.info("Upserting team entities to Port")
+        blueprint_id = "portTeam"
+        for team in team_data:
+            team_identifier = self.transform_identifier(team["name"])
+            entity = {
+                "identifier": team_identifier,
+                "title": team["name"],
+                "properties": {
+                    "description": team.get("description"),
+                },
+                "relations": {
+                    "members": [user["email"] for user in team.get("users", [])]
+                },
+            }
+            self.add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
 
-def get_repository_pull_requests(repository_batch: list[dict[str, Any]]):
-    pr_params = {"state": "ALL"} ## Fetch all pull requests
-    for repository in repository_batch:
-        pull_requests_path = f"projects/{repository['project']['key']}/repos/{repository['slug']}/pull-requests"
-        for pull_requests_batch in get_paginated_resource(path=pull_requests_path, params=pr_params):
-            logger.info(f"received pull requests batch with size {len(pull_requests_batch)} from repo: {repository['slug']}")
-            process_pullrequest_entities(pullrequest_data=pull_requests_batch)
 
 if __name__ == "__main__":
-    project_path = "projects"
-    for projects_batch in get_paginated_resource(path=project_path):
-        logger.info(f"received projects batch with size {len(projects_batch)}")
-        process_project_entities(projects_data=projects_batch)
+    port_api = PortAPI(
+        client_id=config("PORT_CLIENT_ID"),
+        client_secret=config("PORT_CLIENT_SECRET"),
+        api_url="https://api.getport.io/v1",
+    )
 
-        for project in projects_batch:
-            get_repositories(project=project)
+    team_query_params: Dict[str, Any] = {
+        "fields": ["id", "name", "description", "users.email"]
+    }
+
+    user_data = port_api.get_port_resource(objectkind=ObjectKind.USER)
+    team_data = port_api.get_port_resource(
+        objectkind=ObjectKind.TEAM, query_param=team_query_params
+    )
+
+    port_api.process_user_entities(user_data=user_data)
+    port_api.process_team_entities(team_data=team_data)

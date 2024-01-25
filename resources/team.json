@@ -1,0 +1,25 @@
+{
+    "identifier": "portTeam",
+    "title": "Port Team",
+    "icon": "port",
+    "schema": {
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "required": []
+    },
+    "mirrorProperties": {},
+    "calculationProperties": {},
+    "aggregationProperties": {},
+    "relations": {
+      "members": {
+        "title": "Members",
+        "target": "portUser",
+        "required": false,
+        "many": true
+      }
+    }
+}
