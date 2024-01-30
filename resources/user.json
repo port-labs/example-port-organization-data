@@ -1,36 +1,47 @@
 {
-    "identifier": "portUser",
-    "title": "Port User",
-    "icon": "port",
-    "schema": {
-      "properties": {
-        "userInPort": {
-          "title": "User In Port",
-          "type": "string",
-          "format": "user"
-        },
-        "status": {
-          "title": "Status",
-          "type": "string",
-          "enum": [
-            "ACTIVE",
-            "INACTIVE"
-          ],
-          "enumColors": {
-            "ACTIVE": "green",
-            "INACTIVE": "red"
-          }
-        },
-        "createdAt": {
-          "title": "Created At",
-          "type": "string",
-          "format": "date-time"
+  "identifier": "portUser",
+  "title": "Port User",
+  "icon": "port",
+  "schema": {
+    "properties": {
+      "userInPort": {
+        "title": "User In Port",
+        "type": "string",
+        "format": "user"
+      },
+      "status": {
+        "title": "Status",
+        "type": "string",
+        "enum": [
+          "ACTIVE",
+          "INACTIVE"
+        ],
+        "enumColors": {
+          "ACTIVE": "green",
+          "INACTIVE": "red"
         }
       },
-      "required": []
+      "createdAt": {
+        "title": "Created At",
+        "type": "string",
+        "format": "date-time"
+      },
+      "providers": {
+        "title": "Providers",
+        "type": "array"
+      }
     },
-    "mirrorProperties": {},
-    "calculationProperties": {},
-    "aggregationProperties": {},
-    "relations": {}
+    "required": []
+  },
+  "mirrorProperties": {},
+  "calculationProperties": {},
+  "aggregationProperties": {},
+  "relations": {
+    "team": {
+      "title": "Team",
+      "target": "portTeam",
+      "required": false,
+      "many": true
+    }
+  }
 }

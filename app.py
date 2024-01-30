@@ -83,8 +83,11 @@ class PortAPI:
                     "status": user["status"],
                     "createdAt": user["createdAt"],
                     "userInPort": user["email"],
+                    "providers": user["providers"]
                 },
-                "relations": {},
+                "relations": {
+                    "team": [self.transform_identifier(team["name"]) for team in user.get("teams", [])]
+                },
             }
             self.add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
 
@@ -100,7 +103,6 @@ class PortAPI:
                     "description": team.get("description"),
                 },
                 "relations": {
-                    "members": [user["email"] for user in team.get("users", [])]
                 },
             }
             self.add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
@@ -113,14 +115,12 @@ if __name__ == "__main__":
         api_url="https://api.getport.io/v1",
     )
 
-    team_query_params: Dict[str, Any] = {
-        "fields": ["id", "name", "description", "users.email"]
+    user_query_params: Dict[str, Any] = {
+        "fields": ["email", "firstName", "lastName", "status", "providers", "createdAt", "teams.name"]
     }
 
-    user_data = port_api.get_port_resource(objectkind=ObjectKind.USER)
-    team_data = port_api.get_port_resource(
-        objectkind=ObjectKind.TEAM, query_param=team_query_params
-    )
+    user_data = port_api.get_port_resource(objectkind=ObjectKind.USER, query_param=user_query_params)
+    team_data = port_api.get_port_resource(objectkind=ObjectKind.TEAM)
 
     port_api.process_user_entities(user_data=user_data)
     port_api.process_team_entities(team_data=team_data)
