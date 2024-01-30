@@ -74,7 +74,7 @@ class PortAPI:
 
     def process_user_entities(self, user_data: List[Dict[str, Any]]) -> None:
         logger.info("Upserting user entities to Port")
-        blueprint_id = "portUser"
+        blueprint_id = "user"
         for user in user_data:
             entity = {
                 "identifier": user["email"],
@@ -93,7 +93,7 @@ class PortAPI:
 
     def process_team_entities(self, team_data: List[Dict[str, Any]]) -> None:
         logger.info("Upserting team entities to Port")
-        blueprint_id = "portTeam"
+        blueprint_id = "team"
         for team in team_data:
             team_identifier = self.transform_identifier(team["name"])
             entity = {

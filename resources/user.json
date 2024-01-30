@@ -1,5 +1,5 @@
 {
-  "identifier": "portUser",
+  "identifier": "user",
   "title": "Port User",
   "icon": "port",
   "schema": {
@@ -39,7 +39,7 @@
   "relations": {
     "team": {
       "title": "Team",
-      "target": "portTeam",
+      "target": "team",
       "required": false,
       "many": true
     }

@@ -3,7 +3,7 @@
 
 ## Overview
 
-In this example, you will create blueprints for `portUser` and `portTeam` that ingests all users and teams from your [Port account](https://app.getport.io). You will then add some python script to make API calls to Port's REST API and fetch data for your account.
+In this example, you will create blueprints for `user` and `team` that ingests all users and teams from your [Port account](https://app.getport.io). You will then add some python script to make API calls to Port's REST API and fetch data for your account.
 
 ## Getting started
 
