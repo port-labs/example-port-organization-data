@@ -1,0 +1,39 @@
+# Node.js
+node_modules/
+
+# TypeScript
+*.tsbuildinfo
+*.js
+*.jsx
+*.mjs
+*.cjs
+*.d.ts
+
+# Visual Studio Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# TypeScript output directory
+dist/
+
+# npm
+*.log
+*.lock
+
+# yarn
+yarn-error.log
+.pnp/
+.pnp.js
+node_modules/
+
+# Prettier
+.prettierignore
+.prettier.yaml
+
+.env
