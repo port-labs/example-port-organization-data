@@ -23,7 +23,9 @@ The list of variables required to run the scripts are:
 
 Find your port client id and secret from [this guide](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)
 
-Opne a shell and run the following commands: 
+### Running the python script
+
+Opne a shell or terminal and run the following commands: 
 
 ```bash
 export PORT_CLIENT_ID=<ENTER CLIENT ID>
@@ -32,13 +34,7 @@ export PORT_CLIENT_SECRET=<ENTER CLIENT SECRET>
 git clone https://github.com/port-labs/example-port-organization-data.git
 
 cd example-port-organization-data
-```
 
-### Running the python script
-
-To use the python script, run these commands: 
-
-```bash
 pip install -r ./requirements.txt
 
 python app.py
@@ -47,12 +43,18 @@ python app.py
 
 ### Running the typescript script
 
-To use the typescript, run these commands: 
+Opne a shell or terminal and run the following commands: 
 
 ```bash
-cd typescript/
+export PORT_CLIENT_ID=<ENTER CLIENT ID>
+export PORT_CLIENT_SECRET=<ENTER CLIENT SECRET>
+
+git clone https://github.com/port-labs/example-port-organization-data.git
+
+cd example-port-organization-data/typescript
 
 npm install -g ts-node typescript '@types/node'
+
 npm install axios
 
 npx tsx app.ts
