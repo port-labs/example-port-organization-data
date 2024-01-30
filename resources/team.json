@@ -1,6 +1,6 @@
 {
   "identifier": "team",
-  "title": "Port Team",
+  "title": "Team",
   "icon": "port",
   "schema": {
     "properties": {

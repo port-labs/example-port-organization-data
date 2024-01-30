@@ -1,6 +1,6 @@
 {
   "identifier": "user",
-  "title": "Port User",
+  "title": "User",
   "icon": "port",
   "schema": {
     "properties": {
