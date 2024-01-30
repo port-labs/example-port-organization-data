@@ -121,6 +121,6 @@ if __name__ == "__main__":
 
     user_data = port_api.get_port_resource(objectkind=ObjectKind.USER, query_param=user_query_params)
     team_data = port_api.get_port_resource(objectkind=ObjectKind.TEAM)
-
-    port_api.process_user_entities(user_data=user_data)
+    
     port_api.process_team_entities(team_data=team_data)
+    port_api.process_user_entities(user_data=user_data)
