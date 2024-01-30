@@ -36,7 +36,7 @@ cd example-port-organization-data
 
 ### Running the python script
 
-To use the python script: 
+To use the python script, run these commands: 
 
 ```bash
 pip install -r ./requirements.txt
@@ -46,6 +46,8 @@ python app.py
 
 
 ### Running the typescript script
+
+To use the typescript, run these commands: 
 
 ```bash
 cd typescript/
