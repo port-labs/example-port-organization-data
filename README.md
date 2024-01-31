@@ -10,10 +10,10 @@ In this example, you will create blueprints for `user` and `team` that ingests a
 Log in to your Port account and create the following blueprints:
 
 ### User blueprint
-Create the project blueprint in Port [using this json file](./resources/user.json)
+Create the user blueprint in Port [using this json file](./resources/user.json)
 
 ### Team blueprint
-Create the repository blueprint in Port [using this json file](./resources/team.json)
+Create the team blueprint in Port [using this json file](./resources/team.json)
 
 ### Pre-requisites
 
