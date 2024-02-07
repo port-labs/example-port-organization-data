@@ -49,7 +49,7 @@ class PortAPI {
             });
             console.log(response.data);
         } catch (error: any) {
-            console.error(`Error adding entity to Port: ${error.message}`);
+            console.error(`Error adding ${blueprint_id} to Port: ${error?.response?.data?.message || error.message}`);
         }
     }
 
