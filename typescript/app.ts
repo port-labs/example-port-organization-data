@@ -9,6 +9,8 @@ interface EntityObject {
     [key: string]: any;
 }
 
+const PREFIX = "devops-port";
+
 class PortAPI {
     private client_id: string;
     private client_secret: string;
@@ -93,7 +95,7 @@ class PortAPI {
         console.log('Upserting user entities to Port');
         const blueprintId = 'user';
         for (const user of userData) {
-            if (!user.email.StartsWith("devops-port")) {
+            if (!user.email.StartsWith(PREFIX)) {
                 const entity: EntityObject = {
                     identifier: user.email,
                     title: `${user.firstName} ${user.lastName}`,

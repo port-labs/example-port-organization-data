@@ -10,6 +10,7 @@ class ObjectKind(StrEnum):
     USER = "users"
     TEAM = "teams"
 
+PREFIX = "devops-port"
 
 class PortAPI:
     def __init__(self, client_id: str, client_secret: str, api_url: str) -> None:
@@ -76,7 +77,7 @@ class PortAPI:
         logger.info("Upserting user entities to Port")
         blueprint_id = "user"
         for user in user_data:
-            if not user["email"].startswith("devops-port"):
+            if not user["email"].startswith(PREFIX):
                 entity = {
                     "identifier": user["email"],
                     "title": f"{user['firstName']} {user['lastName']}",
