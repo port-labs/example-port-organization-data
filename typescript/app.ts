@@ -95,7 +95,7 @@ class PortAPI {
         console.log('Upserting user entities to Port');
         const blueprintId = 'user';
         for (const user of userData) {
-            if (!user.email.StartsWith(PREFIX)) {
+            if (!user.email.startsWith(PREFIX)) {
                 const entity: EntityObject = {
                     identifier: user.email,
                     title: `${user.firstName} ${user.lastName}`,
