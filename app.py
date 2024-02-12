@@ -10,6 +10,7 @@ class ObjectKind(StrEnum):
     USER = "users"
     TEAM = "teams"
 
+PREFIX = "devops-port"
 
 class PortAPI:
     def __init__(self, client_id: str, client_secret: str, api_url: str) -> None:
@@ -76,20 +77,21 @@ class PortAPI:
         logger.info("Upserting user entities to Port")
         blueprint_id = "user"
         for user in user_data:
-            entity = {
-                "identifier": user["email"],
-                "title": f"{user['firstName']} {user['lastName']}",
-                "properties": {
-                    "status": user["status"],
-                    "createdAt": user["createdAt"],
-                    "userInPort": user["email"],
-                    "providers": user["providers"]
-                },
-                "relations": {
-                    "team": [self.transform_identifier(team["name"]) for team in user.get("teams", [])]
-                },
-            }
-            self.add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
+            if not user["email"].startswith(PREFIX):
+                entity = {
+                    "identifier": user["email"],
+                    "title": f"{user['firstName']} {user['lastName']}",
+                    "properties": {
+                        "status": user["status"],
+                        "createdAt": user["createdAt"],
+                        "userInPort": user["email"],
+                        "providers": user["providers"]
+                    },
+                    "relations": {
+                        "team": [self.transform_identifier(team["name"]) for team in user.get("teams", [])]
+                    },
+                }
+                self.add_entity_to_port(blueprint_id=blueprint_id, entity_object=entity)
 
     def process_team_entities(self, team_data: List[Dict[str, Any]]) -> None:
         logger.info("Upserting team entities to Port")
