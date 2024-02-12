@@ -93,20 +93,22 @@ class PortAPI {
         console.log('Upserting user entities to Port');
         const blueprintId = 'user';
         for (const user of userData) {
-            const entity: EntityObject = {
-                identifier: user.email,
-                title: `${user.firstName} ${user.lastName}`,
-                properties: {
-                    status: user.status,
-                    createdAt: user.createdAt,
-                    userInPort: user.email,
-                    providers: user.providers,
-                },
-                relations: {
-                    team: (user.teams || []).map((team: any) => this.transformIdentifier(team.name)),
-                },
-            };
-            await this.addEntityToPort(blueprintId, entity);
+            if (!user.email.StartsWith("devops-port")) {
+                const entity: EntityObject = {
+                    identifier: user.email,
+                    title: `${user.firstName} ${user.lastName}`,
+                    properties: {
+                        status: user.status,
+                        createdAt: user.createdAt,
+                        userInPort: user.email,
+                        providers: user.providers,
+                    },
+                    relations: {
+                        team: (user.teams || []).map((team: any) => this.transformIdentifier(team.name)),
+                    },
+                };
+                await this.addEntityToPort(blueprintId, entity);
+            }
         }
     }
 
